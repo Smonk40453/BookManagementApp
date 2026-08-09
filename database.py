@@ -1,5 +1,5 @@
 import sqlite3 
-connection = sqlite3.connect("book_managment.db")
+connection = sqlite3.connect("book_management.db")
 cursor = connection.cursor()
 
 cursor.execute("""

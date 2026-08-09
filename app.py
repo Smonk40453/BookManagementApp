@@ -7,7 +7,7 @@ def home():
     return "Book Management App is running!"
 @app.route("/books", methods=["GET"])
 def get_books():
-    connection = sqlite3.connect("book_managment.db")
+    connection = sqlite3.connect("book_management.db")
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM books")
     books = cursor.fetchall()
@@ -23,7 +23,7 @@ def add_book():
     notes = data.get("notes")
     if not title or not author or not reading_status:
         return jsonify({"error": "Title, author, and reading status are required."}), 400
-    connection = sqlite3.connect("book_managment.db")
+    connection = sqlite3.connect("book_management.db")
     cursor = connection.cursor()
     cursor.execute("""
         INSERT INTO books (title, author, reading_status, rating, notes)
@@ -46,7 +46,7 @@ def update_book(book_id):
     notes  = data.get("notes")
     if not title or not author or not reading_status:
         return jsonify({"error": "Title, author, and reading status are required."}), 400 
-    connection = sqlite3.connect("book_managment.db")
+    connection = sqlite3.connect("book_management.db")
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE books
@@ -63,7 +63,23 @@ def update_book(book_id):
     connection.commit()
     if cursor.rowcount == 0:
         connection.close()
-        return jsonify({"error": "Book note found."}),404
+        return jsonify({"error": "Book not found."}),404
     connection.close()
     return jsonify({
         "message": "Book updated successfully!"}),200
+@app.route("/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    connection = sqlite3.connect("book_management.db")
+    cursor = connection.cursor()
+    cursor.execute(
+        "DELETE FROM books WHERE book_id = ?",
+        (book_id,)
+    )
+    connection.commit()
+    if cursor.rowcount == 0:
+        connection.close()
+        return jsonify({"error": "Book note found."}),404
+    connection.close()
+    return jsonify({
+        "message":"Book deleted successfully!"}),200
+    
