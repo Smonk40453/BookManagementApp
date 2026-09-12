@@ -49,11 +49,25 @@ def delete_book(book_id):
         return "Book deleted successfully!"
     else:
         return f"Error deleting book: {response.text}"
+#helper function so that user is not exposed to book_id
+def get_book_choices():
+    response = requests.get("http://127.0.0.1:5000/books")
+    if response.status_code == 200:
+        books = response.json()
+        choices = []
+        for books in books:
+            book_id = books[0]
+            title = books[1]
+            choices.append((title,book_id))
+        return choices
+    return []
     
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
     gr.Markdown("Keep track of your personal reading collection.")
-    book_id = gr.Number(label="Book ID", precision=0)
+    book_selector =gr.Dropdown(
+        choices=get_book_choices(),
+        label="Select a Book")
     title = gr.Textbox(label ="Book Title")
     author = gr.Textbox(label= "Author")
     reading_status = gr.Dropdown(
@@ -79,12 +93,12 @@ with gr.Blocks(title = "Book Managment App") as app:
     update_button = gr.Button("Update Book")
     update_button.click(
         fn=update_book,
-        inputs=[book_id,title,author,reading_status,rating,notes],
+        inputs=[book_selector,title,author,reading_status,rating,notes],
         outputs=message)
     delete_button =gr.Button("Delete Book")
     delete_button.click(
         fn=delete_book,
-        inputs=[book_id],
+        inputs=[book_selector],
         outputs=message)
     view_books_button = gr.Button("View Books")
     books_output = gr.JSON(label="My Books")
