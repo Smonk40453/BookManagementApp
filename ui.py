@@ -26,9 +26,26 @@ def get_books():
         return books
     else:
         return "Unable to retrieve books."
+#Update books
+def update_book(book_id, title, author,reading_status,rating,notes):
+    book_data = {
+        "title":title,
+        "author":author,
+        "reading_status":reading_status,
+        "rating": rating,
+        "notes":notes}
+    response = requests.put(
+        f"http://127.0.0.1:5000/books/{book_id}",
+        json=book_data)
+    if response.status_code == 200:
+        return "Book updated successfully!"
+    else:
+        return f"Error updating book: {response.text}"
+    
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
     gr.Markdown("Keep track of your personal reading collection.")
+    book_id = gr.Number(label="Book ID", precision=0)
     title = gr.Textbox(label ="Book Title")
     author = gr.Textbox(label= "Author")
     reading_status = gr.Dropdown(
@@ -50,6 +67,11 @@ with gr.Blocks(title = "Book Managment App") as app:
     add_button.click(
         fn=add_book,
         inputs=[title, author, reading_status, rating, notes],
+        outputs=message)
+    update_button = gr.Button("Update Book")
+    update_button.click(
+        fn=update_book,
+        inputs=[book_id,title,author,reading_status,rating,notes],
         outputs=message)
     view_books_button = gr.Button("View Books")
     books_output = gr.JSON(label="My Books")
