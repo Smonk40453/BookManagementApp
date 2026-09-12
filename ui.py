@@ -41,6 +41,14 @@ def update_book(book_id, title, author,reading_status,rating,notes):
         return "Book updated successfully!"
     else:
         return f"Error updating book: {response.text}"
+#delete books
+def delete_book(book_id):
+    response = requests.delete(
+        f"http://127.0.0.1:5000/books/{book_id}")
+    if response.status_code == 200:
+        return "Book deleted successfully!"
+    else:
+        return f"Error deleting book: {response.text}"
     
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
@@ -72,6 +80,11 @@ with gr.Blocks(title = "Book Managment App") as app:
     update_button.click(
         fn=update_book,
         inputs=[book_id,title,author,reading_status,rating,notes],
+        outputs=message)
+    delete_button =gr.Button("Delete Book")
+    delete_button.click(
+        fn=delete_book,
+        inputs=[book_id],
         outputs=message)
     view_books_button = gr.Button("View Books")
     books_output = gr.JSON(label="My Books")
