@@ -1,5 +1,6 @@
 import gradio as gr
 import requests
+#Add books to the library
 def add_book(title, author,reading_status,rating,notes):
     if rating =="Not Rated":
         rating = None
@@ -17,6 +18,14 @@ def add_book(title, author,reading_status,rating,notes):
     if response.status_code == 201:
         return "Book added successfully!"
     return f"Error adding book: {response.text}"
+#Grab books from the database 
+def get_books():
+    response = requests.get("http://127.0.0.1:5000/books")
+    if response.status_code == 200:
+        books = response.json()
+        return books
+    else:
+        return "Unable to retrieve books."
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
     gr.Markdown("Keep track of your personal reading collection.")
@@ -42,4 +51,10 @@ with gr.Blocks(title = "Book Managment App") as app:
         fn=add_book,
         inputs=[title, author, reading_status, rating, notes],
         outputs=message)
+    view_books_button = gr.Button("View Books")
+    books_output = gr.JSON(label="My Books")
+    view_books_button.click(
+        fn=get_books,
+        inputs=[],
+        outputs=books_output)
 app.launch()
