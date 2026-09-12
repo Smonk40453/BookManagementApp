@@ -61,6 +61,21 @@ def get_book_choices():
             choices.append((title,book_id))
         return choices
     return []
+#Function to load selectec book
+def load_book(book_id):
+    response = requests.get("http://127.0.0.1:5000/books")
+    if response.status_code == 200:
+        books = response.json()
+        for book in books:
+            if book[0] ==book_id:
+                return(
+                    book[1], #title
+                    book[2], #author
+                    book[3], #reading status
+                    str(book[4]) if book[4] is not None else "Not Rated",
+                    book[5] #notes
+                )
+    return " ", " ", None, None, " "
     
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
@@ -84,6 +99,10 @@ with gr.Blocks(title = "Book Managment App") as app:
     notes = gr.Textbox(
         label="Personal Notes",
         lines=4)
+    book_selector.change(
+        fn=load_book,
+        inputs=[book_selector],
+        outputs=[title, author, reading_status, rating, notes] )
     add_button = gr.Button("Add Book")
     message =gr.Textbox(label="Status", interactive=False)
     add_button.click(
