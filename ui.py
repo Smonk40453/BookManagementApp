@@ -16,8 +16,8 @@ def add_book(title, author,reading_status,rating,notes):
         "http://127.0.0.1:5000/books",
         json=book_data)
     if response.status_code == 201:
-        return "Book added successfully!"
-    return f"Error adding book: {response.text}"
+        return "Book added successfully!", gr.update(choices=get_book_choices())
+    return f"Error adding book: {response.text}",gr.update()
 #Grab books from the database 
 def get_books():
     response = requests.get("http://127.0.0.1:5000/books")
@@ -61,7 +61,7 @@ def get_book_choices():
             choices.append((title,book_id))
         return choices
     return []
-#Function to load selectec book
+#Function to load selected book
 def load_book(book_id):
     response = requests.get("http://127.0.0.1:5000/books")
     if response.status_code == 200:
@@ -76,53 +76,74 @@ def load_book(book_id):
                     book[5] #notes
                 )
     return " ", " ", None, None, " "
+#Autorefresh when book is added
+def refresh_book_selector():
+    return gr.update(choices=get_book_choices())
     
 with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Book Managment App")
     gr.Markdown("Keep track of your personal reading collection.")
-    book_selector =gr.Dropdown(
-        choices=get_book_choices(),
-        label="Select a Book")
-    title = gr.Textbox(label ="Book Title")
-    author = gr.Textbox(label= "Author")
-    reading_status = gr.Dropdown(
-        choices=[
-            "Want to Read",
-            "Currently Reading",
-            "Completed",
-            "Did Not Finish"
-        ],
-        label="Reading Status")
-    rating =gr.Dropdown(
-        choices=["Not Rated","1","2","3","4","5"],
-        label="Rating")
-    notes = gr.Textbox(
-        label="Personal Notes",
-        lines=4)
+    with gr.Tabs():
+        with gr.Tab("My Library"):
+            view_books_button = gr.Button("View Books")
+            books_output = gr.JSON(label="My Books")
+        with gr.Tab("Add Book"):
+            title = gr.Textbox(label ="Book Title")
+            author = gr.Textbox(label= "Author")
+            reading_status = gr.Dropdown(
+            choices=[
+                "Want to Read",
+                "Currently Reading",
+                "Completed",
+                "Did Not Finish"
+            ],
+            label="Reading Status")
+            rating =gr.Dropdown(
+            choices=["Not Rated","1","2","3","4","5"],
+            label="Rating")
+            notes = gr.Textbox(
+            label="Personal Notes",
+            lines=4)
+            add_button = gr.Button("Add Book")
+            message =gr.Textbox(label="Status", interactive=False)
+        with gr.Tab("Manage Books"):
+             book_selector =gr.Dropdown(
+                choices=get_book_choices(),
+                label="Select a Book")
+             edit_title = gr.Textbox(label="Book title")
+             edit_author = gr.Textbox(label="Author")
+             edit_reading_status = gr.Dropdown(
+                 choices=["Want to Read","Reading","Completed"],
+                 label="Reading Status")
+             edit_rating = gr.Dropdown(
+                 choices=["Not Rated","1","2","3","4","5"],
+                 label="Rating")
+             edit_notes = gr.Textbox(
+                 label="Personal Notes",
+                 lines=4)
+             update_button = gr.Button("Update Book")
+             delete_button =gr.Button("Delete Book")
+             manage_message = gr.Textbox(
+                 label="Status",
+                 interactive=False)
     book_selector.change(
         fn=load_book,
         inputs=[book_selector],
-        outputs=[title, author, reading_status, rating, notes] )
-    add_button = gr.Button("Add Book")
-    message =gr.Textbox(label="Status", interactive=False)
+        outputs=[edit_title, edit_author, edit_reading_status, edit_rating, edit_notes] )
     add_button.click(
-        fn=add_book,
-        inputs=[title, author, reading_status, rating, notes],
-        outputs=message)
-    update_button = gr.Button("Update Book")
+                fn=add_book,
+                inputs=[title, author, reading_status, rating, notes],
+                outputs=[message, book_selector])
     update_button.click(
-        fn=update_book,
-        inputs=[book_selector,title,author,reading_status,rating,notes],
-        outputs=message)
-    delete_button =gr.Button("Delete Book")
+                fn=update_book,
+                inputs=[book_selector,edit_title,edit_author,edit_reading_status,edit_rating,edit_notes],
+                outputs=manage_message)
     delete_button.click(
-        fn=delete_book,
-        inputs=[book_selector],
-        outputs=message)
-    view_books_button = gr.Button("View Books")
-    books_output = gr.JSON(label="My Books")
+                fn=delete_book,
+                inputs=[book_selector],
+                outputs=manage_message)
     view_books_button.click(
-        fn=get_books,
-        inputs=[],
-        outputs=books_output)
+                fn=get_books,
+                inputs=[],
+                outputs=books_output)
 app.launch()
