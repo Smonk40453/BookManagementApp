@@ -16,16 +16,25 @@ def add_book(title, author,reading_status,rating,notes):
         "http://127.0.0.1:5000/books",
         json=book_data)
     if response.status_code == 201:
-        return "Book added successfully!", gr.update(choices=get_book_choices())
-    return f"Error adding book: {response.text}",gr.update()
+        return "Book added successfully!", gr.update(choices=get_book_choices()),get_books()
+    return f"Error adding book: {response.text}",gr.update(),gr.update()
 #Grab books from the database 
 def get_books():
     response = requests.get("http://127.0.0.1:5000/books")
     if response.status_code == 200:
         books = response.json()
-        return books
+        library =[]
+        for book in books:
+            library.append([
+                book[1], #title
+                book[2], #author
+                book[3], #status
+                book[4] if book[4] is not None else "Not Rated",
+                book[5] # notes
+            ])
+        return library
     else:
-        return "Unable to retrieve books."
+        return[]
 #Update books
 def update_book(book_id, title, author,reading_status,rating,notes):
     book_data = {
@@ -38,17 +47,19 @@ def update_book(book_id, title, author,reading_status,rating,notes):
         f"http://127.0.0.1:5000/books/{book_id}",
         json=book_data)
     if response.status_code == 200:
-        return "Book updated successfully!"
+        return "Book updated successfully!",get_books()
     else:
-        return f"Error updating book: {response.text}"
+        return f"Error updating book: {response.text}",gr.update()
 #delete books
 def delete_book(book_id):
     response = requests.delete(
         f"http://127.0.0.1:5000/books/{book_id}")
     if response.status_code == 200:
-        return "Book deleted successfully!"
+        return ("Book deleted successfully!",gr.update(
+            choices=get_book_choices(),
+            value=None), get_books())
     else:
-        return f"Error deleting book: {response.text}"
+        return (f"Error deleting book: {response.text}", gr.update(),gr.update())
 #helper function so that user is not exposed to book_id
 def get_book_choices():
     response = requests.get("http://127.0.0.1:5000/books")
@@ -85,8 +96,10 @@ with gr.Blocks(title = "Book Managment App") as app:
     gr.Markdown("Keep track of your personal reading collection.")
     with gr.Tabs():
         with gr.Tab("My Library"):
-            view_books_button = gr.Button("View Books")
-            books_output = gr.JSON(label="My Books")
+            books_output = gr.Dataframe(
+                headers=["Title","Author","Status","Rating","Notes"],
+                interactive=False,
+                label="My Books")
         with gr.Tab("Add Book"):
             title = gr.Textbox(label ="Book Title")
             author = gr.Textbox(label= "Author")
@@ -130,20 +143,20 @@ with gr.Blocks(title = "Book Managment App") as app:
         fn=load_book,
         inputs=[book_selector],
         outputs=[edit_title, edit_author, edit_reading_status, edit_rating, edit_notes] )
+    app.load(
+        fn=get_books,
+        inputs=[],
+        outputs=books_output)
     add_button.click(
                 fn=add_book,
                 inputs=[title, author, reading_status, rating, notes],
-                outputs=[message, book_selector])
+                outputs=[message, book_selector,books_output])
     update_button.click(
                 fn=update_book,
                 inputs=[book_selector,edit_title,edit_author,edit_reading_status,edit_rating,edit_notes],
-                outputs=manage_message)
+                outputs=[manage_message, books_output])
     delete_button.click(
                 fn=delete_book,
                 inputs=[book_selector],
-                outputs=manage_message)
-    view_books_button.click(
-                fn=get_books,
-                inputs=[],
-                outputs=books_output)
+                outputs=[manage_message,book_selector,books_output])
 app.launch()
