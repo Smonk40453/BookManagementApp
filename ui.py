@@ -90,8 +90,16 @@ def load_book(book_id):
 #Autorefresh when book is added
 def refresh_book_selector():
     return gr.update(choices=get_book_choices())
-    
-with gr.Blocks(title = "Book Managment App") as app:
+
+theme = gr.themes.ThemeClass.from_hub("kbray/NeoSand")
+theme.body_background_fill = "#F7F3EA"
+theme.background_fill_primary ="#DDE5D5"
+theme.block_background_fill ="#DDE5D5"
+theme.input_background_fill ="#E8CFCE"
+theme.button_primary_background_fill = "#A8B89A"
+theme.buton_secondary_background_fill = "#E8CFCE"
+theme.button_cancel_background_fill = "#D8A7A7"
+with gr.Blocks(title = "Book Managment App", theme=theme) as app:
     gr.Markdown("Book Managment App")
     gr.Markdown("Keep track of your personal reading collection.")
     with gr.Tabs():
@@ -117,7 +125,7 @@ with gr.Blocks(title = "Book Managment App") as app:
             notes = gr.Textbox(
             label="Personal Notes",
             lines=4)
-            add_button = gr.Button("Add Book")
+            add_button = gr.Button("Add Book", variant="primary")
             message =gr.Textbox(label="Status", interactive=False)
         with gr.Tab("Manage Books"):
              book_selector =gr.Dropdown(
@@ -134,8 +142,8 @@ with gr.Blocks(title = "Book Managment App") as app:
              edit_notes = gr.Textbox(
                  label="Personal Notes",
                  lines=4)
-             update_button = gr.Button("Update Book")
-             delete_button =gr.Button("Delete Book")
+             update_button = gr.Button("Update Book", variant="primary")
+             delete_button =gr.Button("Delete Book", variant="stop")
              manage_message = gr.Textbox(
                  label="Status",
                  interactive=False)
