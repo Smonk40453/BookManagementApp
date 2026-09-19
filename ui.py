@@ -1,5 +1,40 @@
 import gradio as gr
 import requests
+api_session=requests.Session()
+def login_user(username, password):
+    response =api_session.post(
+        "http://127.0.0.1:5000/login",
+        json={
+            "username": username,
+            "password": password
+        } 
+    )
+    if response.status_code == 200:
+        return ("Login successful!",
+                get_books(),
+                gr.update(choices=get_book_choices())
+        )
+    else:
+        return (
+         "Invalid username or password.", 
+         [],
+         gr.update()
+        )
+def logout_user():
+    response = api_session.post(
+        "http://127.0.0.1:5000/logout")
+    if response.status_code == 200:
+        return ( 
+            "Logout successful!",
+            [],
+            gr.update(choices=[], value=None)
+        )
+    else:
+        return(
+            "Error logging out",
+            gr.update(),
+            gr.update()
+        )
 #Add books to the library
 def add_book(title, author,reading_status,rating,notes):
     if rating =="Not Rated":
@@ -12,7 +47,7 @@ def add_book(title, author,reading_status,rating,notes):
         "reading_status": reading_status,
         "rating": rating,
         "notes": notes}
-    response =requests.post(
+    response = api_session.post(
         "http://127.0.0.1:5000/books",
         json=book_data)
     if response.status_code == 201:
@@ -20,7 +55,7 @@ def add_book(title, author,reading_status,rating,notes):
     return f"Error adding book: {response.text}",gr.update(),gr.update()
 #Grab books from the database 
 def get_books():
-    response = requests.get("http://127.0.0.1:5000/books")
+    response = api_session.get("http://127.0.0.1:5000/books")
     if response.status_code == 200:
         books = response.json()
         library =[]
@@ -43,7 +78,7 @@ def update_book(book_id, title, author,reading_status,rating,notes):
         "reading_status":reading_status,
         "rating": rating,
         "notes":notes}
-    response = requests.put(
+    response = api_session.put(
         f"http://127.0.0.1:5000/books/{book_id}",
         json=book_data)
     if response.status_code == 200:
@@ -52,7 +87,7 @@ def update_book(book_id, title, author,reading_status,rating,notes):
         return f"Error updating book: {response.text}",gr.update()
 #delete books
 def delete_book(book_id):
-    response = requests.delete(
+    response = api_session.delete(
         f"http://127.0.0.1:5000/books/{book_id}")
     if response.status_code == 200:
         return ("Book deleted successfully!",gr.update(
@@ -62,7 +97,7 @@ def delete_book(book_id):
         return (f"Error deleting book: {response.text}", gr.update(),gr.update())
 #helper function so that user is not exposed to book_id
 def get_book_choices():
-    response = requests.get("http://127.0.0.1:5000/books")
+    response = api_session.get("http://127.0.0.1:5000/books")
     if response.status_code == 200:
         books = response.json()
         choices = []
@@ -74,7 +109,7 @@ def get_book_choices():
     return []
 #Function to load selected book
 def load_book(book_id):
-    response = requests.get("http://127.0.0.1:5000/books")
+    response = api_session.get("http://127.0.0.1:5000/books")
     if response.status_code == 200:
         books = response.json()
         for book in books:
@@ -107,14 +142,30 @@ theme.table_row_focus = "#F7F3EA"
 theme.body_text_size = "16px"
 with gr.Blocks(title = "Book Managment App", theme=theme) as app:
     gr.Markdown("# Book Managment App")
-    gr.Markdown("### Keep track of your personal reading collection.")
+    gr.Markdown("### Keep track of your personal reading collection." )   
     with gr.Tabs():
+        with gr.Tab("Login"):
+            gr.Markdown("### Login to your Book Tracker")
+            username_input = gr.Textbox(
+                label="Username")
+            password_input = gr.Textbox(
+                label="Password",
+                type="password")
+            login_button = gr.Button(
+                "Login",
+                variant="primary")
+            logout_button = gr.Button(
+                "Logout",
+                variant="stop")
+            login_message = gr.Textbox(
+                label="Status",
+                interactive=False)
         with gr.Tab("My Library"):
             gr.Markdown( "### My Books")
             books_output = gr.Dataframe(
                 headers=["Title", "Author", "Status", "Rating", "Notes"],
                 interactive=False,
-                label= "# My Books")
+                label= "### My Books")
         with gr.Tab("Add Book"):
             with gr.Row():
                 title = gr.Textbox(label ="Book Title")
@@ -180,4 +231,15 @@ with gr.Blocks(title = "Book Managment App", theme=theme) as app:
                 fn=delete_book,
                 inputs=[book_selector],
                 outputs=[manage_message,book_selector,books_output])
+    login_button.click(
+        fn=login_user,
+        inputs=[username_input, password_input],
+        outputs=[login_message, books_output, book_selector])
+    logout_button.click(
+        fn=logout_user,
+        inputs=[],
+        outputs=[
+            login_message,
+            books_output,
+            book_selector] )
 app.launch()
