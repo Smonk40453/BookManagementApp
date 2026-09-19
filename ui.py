@@ -99,29 +99,38 @@ theme.input_background_fill ="#E8CFCE"
 theme.button_primary_background_fill = "#A8B89A"
 theme.buton_secondary_background_fill = "#E8CFCE"
 theme.button_cancel_background_fill = "#D8A7A7"
+theme.block_shadow ="0 4px 12px rgba(120, 130, 110, 0.18)"
+theme.input_shadow="0 2px 6px rgba(120, 130, 110, 0.15)"
+theme.table_even_background_fill = "#DDE5D5"
+theme.table_odd_background_fill = "#E8CFCE"
+theme.table_row_focus = "#F7F3EA"
+theme.body_text_size = "16px"
 with gr.Blocks(title = "Book Managment App", theme=theme) as app:
-    gr.Markdown("Book Managment App")
-    gr.Markdown("Keep track of your personal reading collection.")
+    gr.Markdown("# Book Managment App")
+    gr.Markdown("### Keep track of your personal reading collection.")
     with gr.Tabs():
         with gr.Tab("My Library"):
+            gr.Markdown( "### My Books")
             books_output = gr.Dataframe(
-                headers=["Title","Author","Status","Rating","Notes"],
+                headers=["Title", "Author", "Status", "Rating", "Notes"],
                 interactive=False,
-                label="My Books")
+                label= "# My Books")
         with gr.Tab("Add Book"):
-            title = gr.Textbox(label ="Book Title")
-            author = gr.Textbox(label= "Author")
-            reading_status = gr.Dropdown(
-            choices=[
+            with gr.Row():
+                title = gr.Textbox(label ="Book Title")
+                author = gr.Textbox(label= "Author")
+            with gr.Row():
+                reading_status = gr.Dropdown(
+                choices=[
                 "Want to Read",
                 "Currently Reading",
                 "Completed",
                 "Did Not Finish"
-            ],
-            label="Reading Status")
-            rating =gr.Dropdown(
-            choices=["Not Rated","1","2","3","4","5"],
-            label="Rating")
+                ],
+                label="Reading Status")
+                rating =gr.Dropdown(
+                choices=["Not Rated","1","2","3","4","5"],
+                label="Rating")
             notes = gr.Textbox(
             label="Personal Notes",
             lines=4)
@@ -131,19 +140,22 @@ with gr.Blocks(title = "Book Managment App", theme=theme) as app:
              book_selector =gr.Dropdown(
                 choices=get_book_choices(),
                 label="Select a Book")
-             edit_title = gr.Textbox(label="Book title")
-             edit_author = gr.Textbox(label="Author")
-             edit_reading_status = gr.Dropdown(
+             with gr.Row():
+                edit_title = gr.Textbox(label="Book title")
+                edit_author = gr.Textbox(label="Author")
+             with gr.Row():
+                edit_reading_status = gr.Dropdown(
                  choices=["Want to Read","Reading","Completed"],
                  label="Reading Status")
-             edit_rating = gr.Dropdown(
+                edit_rating = gr.Dropdown(
                  choices=["Not Rated","1","2","3","4","5"],
                  label="Rating")
              edit_notes = gr.Textbox(
                  label="Personal Notes",
                  lines=4)
-             update_button = gr.Button("Update Book", variant="primary")
-             delete_button =gr.Button("Delete Book", variant="stop")
+             with gr.Row():
+                update_button = gr.Button("Update Book", variant="primary")
+                delete_button =gr.Button("Delete Book", variant="stop")
              manage_message = gr.Textbox(
                  label="Status",
                  interactive=False)
@@ -159,6 +171,7 @@ with gr.Blocks(title = "Book Managment App", theme=theme) as app:
                 fn=add_book,
                 inputs=[title, author, reading_status, rating, notes],
                 outputs=[message, book_selector,books_output])
+    
     update_button.click(
                 fn=update_book,
                 inputs=[book_selector,edit_title,edit_author,edit_reading_status,edit_rating,edit_notes],
