@@ -1,12 +1,37 @@
-from flask import Flask, jsonify,request
+from flask import Flask, jsonify,request,session
 import sqlite3
-
+from werkzeug.security import check_password_hash
 app = Flask(__name__)
+app.secret_key = "book-tracker-secret-key"
 @app.route("/")
 def home():
     return "Book Management App is running!"
+@app.route("/login", methods=["POST"])
+def login():
+    data=request.get_json()
+    username =data.get("username")
+    password=data.get("password")
+    connection = sqlite3.connect("book_management.db")
+    cursor=connection.cursor()
+    cursor.execute(
+        "SELECT * FROM users WHERE username = ?",
+        (username,)
+    )
+    user=cursor.fetchone()
+    connection.close()
+    if user and check_password_hash(user[2], password):
+        session["user_id"] = user[0]
+        session["username" ]= user[1]
+        return jsonify({"message": "Login successful!"}), 200
+    return jsonify({"message": "Invalid username or password."}), 401
+@app.route("/logout",methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"message": "Logout successful!"}), 200       
 @app.route("/books", methods=["GET"])
 def get_books():
+    if "user_id" not in session:
+        return jsonify({"message": "Unauthorized. Please log in."}), 401
     connection = sqlite3.connect("book_management.db")
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM books")
@@ -15,6 +40,8 @@ def get_books():
     return jsonify(books)
 @app.route("/books",methods=["POST"])
 def add_book():
+    if "user_id" not in session:
+        return jsonify({"message": "Unauthorized. Please log in."}), 401
     data = request.get_json()
     title = data.get("title")
     author = data.get("author")
@@ -38,6 +65,8 @@ def add_book():
     }), 201    
 @app.route ("/books/<int:book_id>",methods=["PUT"])
 def update_book(book_id):
+    if "user_id" not in session:
+        return jsonify({"message": "Unauthorized. Please log in."}), 401
     data=request.get_json()
     title = data.get("title")
     author = data.get("author")
@@ -69,6 +98,8 @@ def update_book(book_id):
         "message": "Book updated successfully!"}),200
 @app.route("/books/<int:book_id>", methods=["DELETE"])
 def delete_book(book_id):
+    if "user_id" not in session:
+        return jsonify({"message": "Unauthorized. Please log in."}), 401
     connection = sqlite3.connect("book_management.db")
     cursor = connection.cursor()
     cursor.execute(
